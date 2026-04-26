@@ -58,32 +58,34 @@ struct ContentView: View {
     @ViewBuilder
     private var tabbedShell: some View {
         ZStack(alignment: .bottom) {
-            ZStack {
-                switch selection {
-                case .identify:
+            // Both pages live in an HStack so they form one rigid surface.
+            // Animating a single x-offset slides them together with no overlap.
+            GeometryReader { geo in
+                HStack(spacing: 0) {
                     LiveView(selection: $selection, isDetailPresented: $isDetailPresented)
-                        .transition(slideTransition)
-                case .prepare:
+                        .frame(width: geo.size.width, height: geo.size.height)
                     AssistantView(selection: $selection)
-                        .transition(slideTransition)
+                        .frame(width: geo.size.width, height: geo.size.height)
+                }
+                .offset(x: selection == .identify ? 0 : -geo.size.width)
+                .animation(.easeInOut(duration: UIConfig.tabTransitionDuration), value: selection)
+                .clipped()
+            }
+            .ignoresSafeArea()
+            .onChange(of: selection) { _, new in
+                // Camera is owned by LiveView but lives in the shared container;
+                // pause it when the identify page is off-screen.
+                if new == .prepare {
+                    container.camera.pause()
+                } else {
+                    container.camera.resume()
                 }
             }
-            .animation(.easeInOut(duration: UIConfig.tabTransitionDuration), value: selection)
 
             TabBar(selection: $selection)
                 .opacity(isDetailPresented ? 0 : 1)
                 .animation(.easeInOut(duration: 0.2), value: isDetailPresented)
         }
-    }
-
-    /// Pill moves right (→ Prepare) → pages move left, and vice versa.
-    /// Prepare enters from the right, Identify exits to the left — mirroring
-    /// opposite-direction scrolling so the two pages feel like one continuous surface.
-    private var slideTransition: AnyTransition {
-        let goingForward = (selection == .prepare)
-        let edgeIn: Edge  = goingForward ? .trailing : .leading
-        let edgeOut: Edge = goingForward ? .leading  : .trailing
-        return .asymmetric(insertion: .move(edge: edgeIn), removal: .move(edge: edgeOut))
     }
 
     // MARK: Boot
