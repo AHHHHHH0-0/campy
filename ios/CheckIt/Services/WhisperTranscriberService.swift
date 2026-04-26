@@ -1,5 +1,6 @@
 @preconcurrency import AVFoundation
 import Foundation
+import os
 
 #if canImport(ZeticMLange)
 import ZeticMLange
@@ -18,20 +19,35 @@ actor WhisperTranscriberService: WhisperTranscriberServiceProtocol {
 
     private let modelLoader: ModelLoader
     private lazy var tokenizer: WhisperBPETokenizer? = WhisperBPETokenizer.loadFromBundle()
+    private let logger = Logger(subsystem: "CheckIt", category: "Whisper")
 
     init(modelLoader: ModelLoader) {
         self.modelLoader = modelLoader
     }
 
     func transcribe(audio: CapturedAudio) async -> String {
+        let startedAt = Date()
 #if canImport(ZeticMLange)
         guard let encoder = await modelLoader.whisperEncoder,
               let decoder = await modelLoader.whisperDecoder,
               let tokenizer = tokenizer else {
+            #if DEBUG
+            logger.debug("missing whisper prerequisites encoder/decoder/tokenizer")
+            #endif
             return ""
         }
 
-        guard let resampled = Self.resampleTo16k(audio: audio) else { return "" }
+        guard let resampled = Self.resampleTo16k(audio: audio) else {
+            #if DEBUG
+            logger.debug("failed to resample audio to 16k")
+            #endif
+            return ""
+        }
+        #if DEBUG
+        logger.debug(
+            "transcribe start inputPcmCount=\(audio.pcm.count, privacy: .public) inputSampleRate=\(audio.sampleRate, privacy: .public) resampledCount=\(resampled.count, privacy: .public)"
+        )
+        #endif
         let mel = WhisperLogMel.compute(pcm: resampled)
         let melTensor = Self.tensorFromFloats(
             mel,
@@ -59,11 +75,24 @@ actor WhisperTranscriberService: WhisperTranscriberServiceProtocol {
             // Strip the prefix tokens before decoding.
             let prefixCount = tokenizer.startPrefixIDs().count
             let textTokens = Array(generated.dropFirst(prefixCount))
-            return tokenizer.decode(textTokens).trimmingCharacters(in: .whitespacesAndNewlines)
+            let decoded = tokenizer.decode(textTokens).trimmingCharacters(in: .whitespacesAndNewlines)
+            #if DEBUG
+            let latencyMs = Date().timeIntervalSince(startedAt) * 1000
+            logger.debug(
+                "transcribe success latencyMs=\(latencyMs, privacy: .public) tokenCount=\(textTokens.count, privacy: .public) textLength=\(decoded.count, privacy: .public) text=\(decoded, privacy: .public)"
+            )
+            #endif
+            return decoded
         } catch {
+            #if DEBUG
+            logger.debug("transcribe failed with error: \(String(describing: error), privacy: .public)")
+            #endif
             return ""
         }
 #else
+        #if DEBUG
+        logger.debug("canImport(ZeticMLange) is false; returning empty transcript")
+        #endif
         return ""
 #endif
     }

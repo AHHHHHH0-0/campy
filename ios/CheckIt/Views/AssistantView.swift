@@ -1,4 +1,5 @@
 import Network
+import os
 import SwiftUI
 
 /// Prepare mode root. Renders the model-only transcript on the paper background,
@@ -21,6 +22,7 @@ struct AssistantView: View {
     @State private var levelTask: Task<Void, Never>? = nil
     @State private var cancelTask: Task<Void, Never>? = nil
     @State private var pathMonitor: NWPathMonitor? = nil
+    private let logger = Logger(subsystem: "CheckIt", category: "AssistantFlow")
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -230,7 +232,17 @@ struct AssistantView: View {
         guard wasOnline else { return }
 
         Task { @MainActor in
-            guard let captured = await container.speechInput.stop() else { return }
+            guard let captured = await container.speechInput.stop() else {
+                #if DEBUG
+                logger.debug("speechInput.stop() returned nil captured audio")
+                #endif
+                return
+            }
+            #if DEBUG
+            logger.debug(
+                "captured audio pcmCount=\(captured.pcm.count, privacy: .public) sampleRate=\(captured.sampleRate, privacy: .public) channelCount=\(captured.channelCount, privacy: .public)"
+            )
+            #endif
             await dispatch(captured: captured)
         }
     }
@@ -287,7 +299,17 @@ struct AssistantView: View {
     private func dispatch(captured: CapturedAudio) async {
         isPending = true
         let transcript = await container.whisper.transcribe(audio: captured)
+        #if DEBUG
+        logger.debug(
+            "whisper transcript length=\(transcript.count, privacy: .public) text=\(transcript, privacy: .public)"
+        )
+        #endif
         let result = await container.gemini.dispatch(transcript: transcript)
+        #if DEBUG
+        logger.debug(
+            "gemini reply canned=\(result.canned, privacy: .public) chatLatencyMs=\(result.chatLatencyMs, privacy: .public) packLatencyMs=\(result.packLatencyMs ?? -1, privacy: .public) reply=\(result.chatReply, privacy: .public)"
+        )
+        #endif
         let reply = ModelReply(text: result.chatReply)
         await container.transcriptStore.append(reply)
         replies = await container.transcriptStore.snapshot()

@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 /// Two parallel `gemini-2.5-flash` calls per user turn:
 /// - Chat call: free-text reply governed by `geminiChatSystemPrompt`.
@@ -13,6 +14,7 @@ final class GeminiPackService: GeminiServiceProtocol, @unchecked Sendable {
     private let packStore: any PackStoreProtocol
     private let transcriptStore: any TranscriptStoreProtocol
     private let urlSession: URLSession
+    private let logger = Logger(subsystem: "CheckIt", category: "Gemini")
 
     init(
         packStore: any PackStoreProtocol,
@@ -27,6 +29,11 @@ final class GeminiPackService: GeminiServiceProtocol, @unchecked Sendable {
     func dispatch(transcript rawTranscript: String) async -> GeminiTurnResult {
         let transcript = Self.applyDenylist(to: rawTranscript)
         let history = await transcriptStore.snapshot()
+        #if DEBUG
+        logger.debug(
+            "dispatch rawTranscriptLength=\(rawTranscript.count, privacy: .public) filteredTranscriptLength=\(transcript.count, privacy: .public) historyCount=\(history.count, privacy: .public) rawPreview=\(Self.preview(rawTranscript), privacy: .public) filteredPreview=\(Self.preview(transcript), privacy: .public)"
+        )
+        #endif
 
         async let chat = chatCall(userTurn: transcript, history: history)
         async let pack = packCall(userTurn: transcript, history: history)
@@ -35,6 +42,9 @@ final class GeminiPackService: GeminiServiceProtocol, @unchecked Sendable {
 
         // Quota / network failure on the chat call swaps in the canned reply.
         if case .quota = chatOutcome.kind {
+            #if DEBUG
+            logger.debug("chat outcome quota/network fallback -> canned quota reply")
+            #endif
             return GeminiTurnResult(
                 chatReply: PromptConfig.cannedQuotaReply,
                 updatedPack: nil,
@@ -57,6 +67,11 @@ final class GeminiPackService: GeminiServiceProtocol, @unchecked Sendable {
         case .text(let reply): chatReply = reply
         default: chatReply = PromptConfig.cannedQuotaReply
         }
+        #if DEBUG
+        logger.debug(
+            "dispatch complete chatLatencyMs=\(chatOutcome.latencyMs, privacy: .public) packLatencyMs=\(packOutcome.latencyMs, privacy: .public) canned=\(false, privacy: .public) chatReplyPreview=\(Self.preview(chatReply), privacy: .public)"
+        )
+        #endif
 
         return GeminiTurnResult(
             chatReply: chatReply,
@@ -90,11 +105,19 @@ final class GeminiPackService: GeminiServiceProtocol, @unchecked Sendable {
             )
             let latency = Date().timeIntervalSince(start) * 1000
             let text = response.firstText() ?? ""
+            #if DEBUG
+            logger.debug("chatCall success userTurnLength=\(userTurn.count, privacy: .public) replyLength=\(text.count, privacy: .public)")
+            #endif
             return CallOutcome(kind: .text(text), latencyMs: latency)
         } catch GeminiError.quota {
+            #if DEBUG
+            logger.debug("chatCall got quota/network fallback")
+            #endif
             return CallOutcome(kind: .quota, latencyMs: Date().timeIntervalSince(start) * 1000)
         } catch {
-            print("[GeminiPackService] chatCall error: \(error)")
+            #if DEBUG
+            logger.debug("chatCall error: \(String(describing: error), privacy: .public)")
+            #endif
             return CallOutcome(kind: .quota, latencyMs: Date().timeIntervalSince(start) * 1000)
         }
     }
@@ -103,6 +126,9 @@ final class GeminiPackService: GeminiServiceProtocol, @unchecked Sendable {
         let start = Date()
         let trimmed = userTurn.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty || !history.isEmpty else {
+            #if DEBUG
+            logger.debug("packCall skipped: empty userTurn and empty history")
+            #endif
             return CallOutcome(kind: .pack(nil), latencyMs: 0)
         }
         var attempt = 0
@@ -124,14 +150,30 @@ final class GeminiPackService: GeminiServiceProtocol, @unchecked Sendable {
                 let decoder = JSONDecoder()
                 decoder.dateDecodingStrategy = .iso8601
                 let pack = try decoder.decode(RegionPack.self, from: data)
+                #if DEBUG
+                logger.debug(
+                    "packCall success attempt=\(attempt, privacy: .public) destinationSlug=\(pack.destinationSlug, privacy: .public) entries=\(pack.entries.count, privacy: .public)"
+                )
+                #endif
                 return CallOutcome(kind: .pack(pack), latencyMs: Date().timeIntervalSince(start) * 1000)
             } catch GeminiError.quota {
+                #if DEBUG
+                logger.debug("packCall got quota/network fallback")
+                #endif
                 return CallOutcome(kind: .quota, latencyMs: Date().timeIntervalSince(start) * 1000)
             } catch {
+                #if DEBUG
+                logger.debug(
+                    "packCall parse/network error attempt=\(attempt, privacy: .public): \(String(describing: error), privacy: .public)"
+                )
+                #endif
                 lastError = error
                 continue
             }
         }
+        #if DEBUG
+        logger.debug("packCall exhausted retries; dropping pack update")
+        #endif
         return CallOutcome(kind: .pack(nil), latencyMs: Date().timeIntervalSince(start) * 1000)
     }
 
@@ -182,6 +224,12 @@ final class GeminiPackService: GeminiServiceProtocol, @unchecked Sendable {
         let recent = history.suffix(6)
         let lines = recent.map { "- \($0.text)" }.joined(separator: "\n")
         return "\n\nPrior assistant replies (for context only):\n\(lines)"
+    }
+
+    private static func preview(_ text: String, maxLength: Int = 120) -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count > maxLength else { return trimmed }
+        return String(trimmed.prefix(maxLength)) + "..."
     }
 
     // MARK: HTTP
