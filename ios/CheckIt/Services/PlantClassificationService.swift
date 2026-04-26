@@ -128,12 +128,22 @@ actor PlantClassificationService: PlantClassificationServiceProtocol {
     ///   class_idx_to_species_id.json  — {"0": "1355868", "1": "1355920", ...}
     ///   plantnet300K_species_id_2_name.json — {"1355868": "Lactuca virosa L.", ...}
     private static func loadClassIndexMap() -> [Int: String] {
+        // The Plant group is a PBXGroup with path="Plant", so Xcode copies its
+        // files into a Plant/ subdirectory of the app bundle (not the root).
         guard
             let idxURL = Bundle.main.url(
+                forResource: ModelConfig.PlantClassifier.classIndexToSpeciesIdResource,
+                withExtension: "json",
+                subdirectory: "Plant"
+            ) ?? Bundle.main.url(
                 forResource: ModelConfig.PlantClassifier.classIndexToSpeciesIdResource,
                 withExtension: "json"
             ),
             let nameURL = Bundle.main.url(
+                forResource: ModelConfig.PlantClassifier.speciesIdToNameResource,
+                withExtension: "json",
+                subdirectory: "Plant"
+            ) ?? Bundle.main.url(
                 forResource: ModelConfig.PlantClassifier.speciesIdToNameResource,
                 withExtension: "json"
             ),

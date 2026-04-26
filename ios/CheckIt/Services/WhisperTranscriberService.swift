@@ -57,18 +57,36 @@ actor WhisperTranscriberService: WhisperTranscriberServiceProtocol {
 
         do {
             let encoderOutputs = try encoder.run(inputs: [melTensor])
-            guard let encoded = encoderOutputs.first else { return "" }
+            guard !encoderOutputs.isEmpty else { return "" }
+            #if DEBUG
+            logger.debug("encoder outputs count=\(encoderOutputs.count, privacy: .public)")
+            #endif
+
+            let encoded = encoderOutputs[0]
+            let padLen = AppConfig.whisperStaticDecodeLen
 
             var generated: [Int] = tokenizer.startPrefixIDs()
             let endID = tokenizer.endOfTextTokenID ?? -1
             let suppress = tokenizer.timestampTokenIDs
 
             while generated.count < AppConfig.whisperMaxDecodeTokens {
-                let tokenTensor = Self.tensorFromInt32(generated.map { Int32($0) })
-                let logits = try decoder.run(inputs: [encoded, tokenTensor])
-                guard let lastLogits = logits.first else { break }
+                // Zetic's decoder is compiled with static shapes. Inputs must be:
+                //   [0] input_ids          — [1, 448] int32, padded with 0
+                //   [1] encoder_hidden_states — [1, 1500, d_model] float32
+                //   [2] decoder_attention_mask — [1, 448] int32, 1 for real tokens, 0 for pad
+                var paddedIds = generated.map { Int32($0) }
+                paddedIds.append(contentsOf: [Int32](repeating: 0, count: max(0, padLen - paddedIds.count)))
 
-                let nextID = Self.greedyArgmax(logits: lastLogits, suppress: suppress)
+                var mask = [Int32](repeating: 0, count: padLen)
+                for i in 0..<min(generated.count, padLen) { mask[i] = 1 }
+
+                let tokenTensor = Self.tensorFromInt32(paddedIds)
+                let maskTensor  = Self.tensorFromInt32(mask)
+                let logits = try decoder.run(inputs: [tokenTensor, encoded, maskTensor])
+                guard let outputTensor = logits.first else { break }
+
+                // Predict next token from logits at the last real position.
+                let nextID = Self.greedyArgmax(logits: outputTensor, atPosition: generated.count - 1, suppress: suppress)
                 if nextID == endID || nextID < 0 { break }
                 generated.append(nextID)
             }
@@ -109,27 +127,26 @@ actor WhisperTranscriberService: WhisperTranscriberServiceProtocol {
         return Tensor(data: data, dataType: BuiltinDataType.int32, shape: [1, ints.count])
     }
 
-    /// Greedy argmax over the final time-step's logits. The decoder output is
-    /// shaped `[batch, time, vocab]`; we take the logits at the last time step.
-    private static func greedyArgmax(logits: Tensor, suppress: Set<Int>) -> Int {
+    /// Greedy argmax over the logits at a specific sequence position.
+    /// The Zetic decoder emits `[1, seq_len, vocab]`; we read position `atPosition`
+    /// (the last real token), which contains the next-token prediction.
+    private static func greedyArgmax(logits: Tensor, atPosition position: Int, suppress: Set<Int>) -> Int {
         let count = logits.count()
         guard count > 0 else { return -1 }
+        let vocab = logits.shape.last ?? 0
+        guard vocab > 0 else { return -1 }
         let floats: [Float] = logits.data.withUnsafeBytes { Array($0.bindMemory(to: Float.self).prefix(count)) }
-        // Time axis is the next-to-last; vocab is last. Without per-model shape
-        // metadata we conservatively assume the decoder emits a single timestep
-        // per call (Zetic's static-shape decoder export pattern), so the entire
-        // output is one logits row.
-        let vocab = logits.shape.last ?? floats.count
-        let start = max(0, floats.count - vocab)
+        let seqLen = count / vocab
+        let safePos = min(max(position, 0), seqLen - 1)
+        let start = safePos * vocab
         var bestIdx = -1
         var bestVal: Float = -.greatestFiniteMagnitude
         for i in 0..<vocab {
-            let id = i
-            if suppress.contains(id) { continue }
+            if suppress.contains(i) { continue }
             let v = floats[start + i]
             if v > bestVal {
                 bestVal = v
-                bestIdx = id
+                bestIdx = i
             }
         }
         return bestIdx

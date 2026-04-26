@@ -34,7 +34,12 @@ enum AppConfig {
     static let whisperMelBins: Int = 80
     static let whisperFFTSize: Int = 400
     static let whisperHopSize: Int = 160
+    /// Maximum number of tokens to generate per utterance (loop guard).
     static let whisperMaxDecodeTokens: Int = 224
+    /// Fixed sequence-length the Zetic decoder was compiled with (max_target_positions
+    /// for whisper-tiny). Every decoder call must pad input_ids and attention_mask to
+    /// exactly this length regardless of how many tokens have been generated so far.
+    static let whisperStaticDecodeLen: Int = 448
 
     // Performance targets (used by debug HUD)
     static let targetFPS: Double = 30.0

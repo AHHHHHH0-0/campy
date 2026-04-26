@@ -229,16 +229,32 @@ struct DetailSheet: View {
         await streamTask?.value
     }
 
-    /// Strips `<think>…</think>` and `<thinking>…</thinking>` reasoning blocks
-    /// that Gemma may emit before its final answer.
+    /// Strips reasoning/thinking blocks that Gemma emits before its final answer.
+    /// Handles two formats:
+    ///   • `<think>…</think>` / `<thinking>…</thinking>`
+    ///   • `<|WORD>…<WORD|>` (mirrored pipe-token blocks, e.g. `<|channel>…<channel|>`)
     private func stripThinkingTags(_ raw: String) -> String {
-        guard let regex = try? NSRegularExpression(
+        var result = raw
+
+        // Pattern 1: <think>…</think> and <thinking>…</thinking>
+        if let re = try? NSRegularExpression(
             pattern: #"<think(?:ing)?>\s*[\s\S]*?</think(?:ing)?>"#,
             options: .caseInsensitive
-        ) else { return raw }
-        let range = NSRange(raw.startIndex..., in: raw)
-        let stripped = regex.stringByReplacingMatches(in: raw, range: range, withTemplate: "")
-        return stripped.trimmingCharacters(in: .whitespacesAndNewlines)
+        ) {
+            let r = NSRange(result.startIndex..., in: result)
+            result = re.stringByReplacingMatches(in: result, range: r, withTemplate: "")
+        }
+
+        // Pattern 2: <|WORD>…<WORD|>  (backreference ensures open/close tags match)
+        if let re = try? NSRegularExpression(
+            pattern: #"<\|(\w+)>[\s\S]*?<\1\|>"#,
+            options: .caseInsensitive
+        ) {
+            let r = NSRange(result.startIndex..., in: result)
+            result = re.stringByReplacingMatches(in: result, range: r, withTemplate: "")
+        }
+
+        return result.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private var displayText: String {

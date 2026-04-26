@@ -25,9 +25,10 @@ enum ModelConfig {
         static let speciesIdToNameResource = "plantnet300K_species_id_2_name"
     }
 
-    // Whisper encoder
+    // Whisper encoder — must match the decoder variant (both tiny: d_model=384).
+    // whisper-base-encoder outputs d_model=512 which is incompatible with whisper-tiny-decoder.
     enum WhisperEncoder {
-        static let name = "OpenAI/whisper-base-encoder"
+        static let name = "OpenAI/whisper-tiny-encoder"
         static let version = 1
     }
 

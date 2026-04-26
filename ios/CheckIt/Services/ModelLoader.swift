@@ -196,6 +196,7 @@ final class ModelLoader {
                 personalKey: personalKey,
                 name: ModelConfig.Gemma.name,
                 version: ModelConfig.Gemma.version,
+                modelMode: .RUN_SPEED,
                 onDownload: { [weak self] progress in
                     Task { @MainActor in self?.gemmaProgress = Double(progress) }
                 }
