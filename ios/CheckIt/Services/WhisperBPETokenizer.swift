@@ -18,7 +18,11 @@ final class WhisperBPETokenizer: @unchecked Sendable {
     static func loadFromBundle() -> WhisperBPETokenizer? {
         let log = Logger(subsystem: "CheckIt", category: "WhisperTokenizer")
         let resource = ModelConfig.WhisperTokenizer.vocabResource
-        let vocabURL = Bundle.main.url(forResource: resource, withExtension: "json")
+        // The Whisper/ folder is a folder reference in the Xcode project (same pattern
+        // as SeedPacks), so the vocab file lands inside a Whisper/ subdirectory of the
+        // bundle. Fall back to a flat lookup for any future packaging changes.
+        let vocabURL = Bundle.main.url(forResource: resource, withExtension: "json", subdirectory: "Whisper")
+                    ?? Bundle.main.url(forResource: resource, withExtension: "json")
         #if DEBUG
         let urlPath = vocabURL?.path ?? "nil"
         let found = vocabURL != nil
@@ -28,6 +32,13 @@ final class WhisperBPETokenizer: @unchecked Sendable {
             let jsonFiles = bundleContents.filter { $0.hasSuffix(".json") }
             let jsonFilesList = jsonFiles.joined(separator: ", ")
             log.debug("bundle json files: \(jsonFilesList, privacy: .public)")
+            if let whisperDir = Bundle.main.url(forResource: "Whisper", withExtension: nil) {
+                let whisperContents = (try? FileManager.default.contentsOfDirectory(atPath: whisperDir.path)) ?? []
+                let whisperContentsList = whisperContents.joined(separator: ", ")
+                log.debug("Whisper/ dir contents: \(whisperContentsList, privacy: .public)")
+            } else {
+                log.debug("Whisper/ subdirectory not found in bundle")
+            }
         }
         #endif
         guard let url = vocabURL,

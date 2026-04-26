@@ -163,7 +163,3 @@ actor PlantClassificationService: PlantClassificationServiceProtocol {
 actor StubPlantClassificationService: PlantClassificationServiceProtocol {
     func classify(crop: CGRect, in frame: CameraFrame) async -> PlantPrediction? { nil }
 }
-
-actor StubPlantClassificationService: PlantClassificationServiceProtocol {
-    func classify(crop: CGRect, in frame: CameraFrame) async -> PlantPrediction? { nil }
-}
