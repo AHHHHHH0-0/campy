@@ -19,7 +19,10 @@ enum ModelConfig {
         static let inputSize: (width: Int, height: Int) = (224, 224)
         static let mean: [Float] = [0.485, 0.456, 0.406]
         static let std: [Float] = [0.229, 0.224, 0.225]
-        static let topKLabelsResource = "plant300k_labels"
+        /// Bundled under Resources/Plant/. Maps classifier output index (as string key) → PlantNet species ID.
+        static let classIndexToSpeciesIdResource = "class_idx_to_species_id"
+        /// Bundled under Resources/Plant/. Maps PlantNet species ID → scientific name string.
+        static let speciesIdToNameResource = "plantnet300K_species_id_2_name"
     }
 
     // Whisper encoder
