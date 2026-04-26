@@ -35,6 +35,12 @@ final class GemmaReasoningService: GemmaReasoningServiceProtocol, @unchecked Sen
         return streamTokens(prompt: prompt, cacheKey: "notfound:\(scientificName.lowercased())")
     }
 
+    func narrateObject(yoloClass: String) -> AsyncStream<String> {
+        let prompt = PromptConfig.gemmaObjectPromptTemplate
+            .replacingOccurrences(of: "{yolo_class}", with: yoloClass)
+        return streamTokens(prompt: prompt, cacheKey: "notfood:\(yoloClass.lowercased())")
+    }
+
     func cachedNarrative(forKey key: String) -> GemmaNarrative? {
         cacheLock.withLock { $0[key.lowercased()] }
     }
@@ -101,32 +107,3 @@ final class GemmaReasoningService: GemmaReasoningServiceProtocol, @unchecked Sen
 #endif
 }
 
-final class StubGemmaReasoningService: GemmaReasoningServiceProtocol, @unchecked Sendable {
-    private let cacheLock = OSAllocatedUnfairLock<[String: GemmaNarrative]>(initialState: [:])
-
-    func narrate(plant entry: RegionPack.Entry, prepBlurb: String?) -> AsyncStream<String> {
-        AsyncStream {
-            $0.yield("Stub narrative for \(entry.commonName).")
-            $0.finish()
-        }
-    }
-
-    func narrateNotFound(scientificName: String) -> AsyncStream<String> {
-        AsyncStream {
-            $0.yield("Stub narrative — \(scientificName) not in local database.")
-            $0.finish()
-        }
-    }
-
-    func cachedNarrative(forKey key: String) -> GemmaNarrative? {
-        cacheLock.withLock { $0[key.lowercased()] }
-    }
-
-    func cache(narrative: GemmaNarrative) {
-        cacheLock.withLock { $0[narrative.key.lowercased()] = narrative }
-    }
-
-    func clearCache() {
-        cacheLock.withLock { $0.removeAll() }
-    }
-}

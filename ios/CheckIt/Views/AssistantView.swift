@@ -28,8 +28,6 @@ struct AssistantView: View {
         ZStack(alignment: .bottom) {
             UIConfig.paper.ignoresSafeArea()
 
-            // The press-and-hold target is the body above the tab bar.
-            // The tab bar is added on top so its taps stay routable.
             ZStack {
                 transcriptScroll
 
@@ -48,8 +46,6 @@ struct AssistantView: View {
             .contentShape(Rectangle())
             .simultaneousGesture(holdGesture)
             .simultaneousGesture(tripleTapGesture)
-
-            TabBar(selection: $selection)
         }
         .task {
             await loadInitial()

@@ -5,7 +5,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
     <key>CFBundleDisplayName</key>
-    <string>Campy</string>
+    <string>Checkit</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -38,9 +38,9 @@
     <key>UIUserInterfaceStyle</key>
     <string>Light</string>
     <key>NSCameraUsageDescription</key>
-    <string>Campy uses the camera to identify plants and other objects on-device.</string>
+    <string>Checkit uses the camera to identify plants and other objects on-device.</string>
     <key>NSMicrophoneUsageDescription</key>
-    <string>Campy uses the microphone so you can talk to the prep assistant.</string>
+    <string>Checkit uses the microphone so you can talk to the prep assistant.</string>
     <key>NSAppTransportSecurity</key>
     <dict>
         <key>NSAllowsArbitraryLoads</key>

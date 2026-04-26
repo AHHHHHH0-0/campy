@@ -5,6 +5,7 @@ import SwiftUI
 /// detail sheet on box tap.
 struct LiveView: View {
     @Binding var selection: AppTab
+    @Binding var isDetailPresented: Bool
     @Environment(\.appContainer) private var container
     @Environment(\.scenePhase) private var scenePhase
 
@@ -48,12 +49,6 @@ struct LiveView: View {
                 .allowsHitTesting(false)
             }
 
-            VStack {
-                Spacer()
-                TabBar(selection: $selection)
-            }
-            .opacity(presentedDetection == nil ? 1 : 0)
-
             if let det = presentedDetection {
                 DetailSheet(
                     detection: det,
@@ -94,13 +89,12 @@ struct LiveView: View {
 
     private func handleBoxTap(_ det: TrackedDetection, _ state: DetectionState) {
         guard presentedDetection == nil else { return }
-        // Resolve highest current-frame confidence at tap location is implicit:
-        // `OverlayCanvas` only forwards a tap from the topmost rendered box.
         container.camera.pause()
         withAnimation(UIConfig.Bloom.openCurve) {
             presentedDetection = det
             presentedState = state
             presentedFrame = lastFrame
+            isDetailPresented = true
         }
     }
 
@@ -109,6 +103,7 @@ struct LiveView: View {
             presentedDetection = nil
             presentedState = .blank
             presentedFrame = nil
+            isDetailPresented = false
         }
         container.camera.resume()
     }

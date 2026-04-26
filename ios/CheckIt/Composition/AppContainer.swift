@@ -127,7 +127,7 @@ final class AppContainer {
         let plantKnowledge = OfflinePlantKnowledgeService(packStore: packStore)
         let transcriptStore = TranscriptStore()
         let gemini = StubGeminiService()
-        let gemma = StubGemmaReasoningService()
+        let gemma = GemmaReasoningService(modelLoader: modelLoader)
         return AppContainer(
             camera: camera,
             tensorFactory: tensorFactory,

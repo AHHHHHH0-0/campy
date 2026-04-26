@@ -22,7 +22,7 @@ struct ContentView: View {
     @Environment(\.appContainer) private var container
     @State private var phase: Phase = .welcome
     @State private var selection: AppTab = .identify
-    @State private var lastTab: AppTab = .identify
+    @State private var isDetailPresented: Bool = false
 
     var body: some View {
         ZStack {
@@ -57,26 +57,31 @@ struct ContentView: View {
 
     @ViewBuilder
     private var tabbedShell: some View {
-        ZStack {
-            switch selection {
-            case .identify:
-                LiveView(selection: $selection)
-                    .transition(slideTransition(to: .identify))
-            case .prepare:
-                AssistantView(selection: $selection)
-                    .transition(slideTransition(to: .prepare))
+        ZStack(alignment: .bottom) {
+            ZStack {
+                switch selection {
+                case .identify:
+                    LiveView(selection: $selection, isDetailPresented: $isDetailPresented)
+                        .transition(slideTransition)
+                case .prepare:
+                    AssistantView(selection: $selection)
+                        .transition(slideTransition)
+                }
             }
-        }
-        .animation(.easeInOut(duration: UIConfig.tabTransitionDuration), value: selection)
-        .onChange(of: selection) { _, new in
-            lastTab = new
+            .animation(.easeInOut(duration: UIConfig.tabTransitionDuration), value: selection)
+
+            TabBar(selection: $selection)
+                .opacity(isDetailPresented ? 0 : 1)
+                .animation(.easeInOut(duration: 0.2), value: isDetailPresented)
         }
     }
 
-    private func slideTransition(to tab: AppTab) -> AnyTransition {
-        let goingForward = tab.orderIndex >= lastTab.orderIndex
-        let edgeIn: Edge = goingForward ? .trailing : .leading
-        let edgeOut: Edge = goingForward ? .leading : .trailing
+    /// Direction is fully determined by the new selection value: going to
+    /// `.prepare` is always forward (right), going to `.identify` is backward (left).
+    private var slideTransition: AnyTransition {
+        let goingForward = (selection == .prepare)
+        let edgeIn: Edge  = goingForward ? .trailing : .leading
+        let edgeOut: Edge = goingForward ? .leading  : .trailing
         return .asymmetric(insertion: .move(edge: edgeIn), removal: .move(edge: edgeOut))
     }
 

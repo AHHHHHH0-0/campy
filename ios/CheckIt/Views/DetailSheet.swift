@@ -2,8 +2,8 @@ import SwiftUI
 
 /// Full-screen card that animates in via a custom bloom from the tapped box's
 /// frame (paired with the `OverlayCanvas` `matchedGeometryEffect`). Streams a
-/// Gemma narrative paragraph (in-pack / not-found paths) or shows the static
-/// "this is a {class}, not food" template for non-plant detections.
+/// Gemma narrative paragraph for every detection: in-pack plants, not-found
+/// plants, and general YOLO objects (where Gemma decides food vs. not food).
 struct DetailSheet: View {
     let detection: TrackedDetection
     let state: DetectionState
@@ -184,16 +184,7 @@ struct DetailSheet: View {
             return
         }
 
-        // Non-plant detections short-circuit to a static template — no Gemma.
-        switch resolvedState {
-        case .notFood(let cls):
-            paragraph = staticNotFoodLine(for: cls)
-            return
-        case .blank:
-            return
-        default:
-            break
-        }
+        if case .blank = resolvedState { return }
 
         let cacheKey = self.cacheKey
         if let cached = container.gemma.cachedNarrative(forKey: cacheKey) {
@@ -210,6 +201,8 @@ struct DetailSheet: View {
             stream = container.gemma.narrate(plant: e, prepBlurb: blurb)
         case .notFound(let name):
             stream = container.gemma.narrateNotFound(scientificName: name)
+        case .notFood(let cls):
+            stream = container.gemma.narrateObject(yoloClass: cls)
         default:
             return
         }
@@ -239,7 +232,4 @@ struct DetailSheet: View {
         }
     }
 
-    private func staticNotFoodLine(for cls: String) -> String {
-        "this is a \(cls), not food"
-    }
 }

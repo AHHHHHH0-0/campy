@@ -121,10 +121,28 @@ enum PromptConfig {
     record the user should not consume it. Plain text only.
     """
 
-    /// Used for non-plant YOLO detections; never goes through Gemma.
-    static func notFoodTemplate(yoloClass: String) -> String {
-        "this is a \(yoloClass), not food"
-    }
+    /// Used when YOLO detects a general object that is not a known plant. Gemma
+    /// decides whether the object is food and provides safety guidance, or states
+    /// it is not food.
+    static let gemmaObjectPromptTemplate: String = """
+    You are a careful field-guide narrator for an outdoor foraging app. The camera
+    has detected the following object: "{yolo_class}".
+
+    Apply these rules in order:
+
+    1. If this is clearly not food — a manufactured object such as a phone, tool,
+       appliance, vehicle, piece of clothing, or any non-organic item — reply with
+       EXACTLY this line and nothing else (substitute the actual detected name):
+       This is a {yolo_class}, not food
+
+    2. If this is a naturally edible item (fruit, vegetable, nut, grain, egg, etc.):
+       write one short paragraph (2–4 sentences) describing its general edibility,
+       practical safety tips (washing, checking for spoilage, pests, bruising), and
+       any common concerns. Plain text only — no markdown, no lists, no headings.
+
+    3. If you are unsure whether it is safe to consume, advise caution in one or two
+       plain-text sentences.
+    """
 
     // MARK: Canned outputs / quota / hallucination filtering
 

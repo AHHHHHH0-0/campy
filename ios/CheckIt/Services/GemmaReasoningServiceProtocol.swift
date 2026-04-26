@@ -8,6 +8,10 @@ protocol GemmaReasoningServiceProtocol: AnyObject, Sendable {
     /// Token-streamed paragraph for the not-found narrator path.
     func narrateNotFound(scientificName: String) -> AsyncStream<String>
 
+    /// Token-streamed response for a general YOLO-detected object. Gemma decides
+    /// whether it is food (with safety tips) or clearly not food.
+    func narrateObject(yoloClass: String) -> AsyncStream<String>
+
     /// Cached final paragraph keyed by scientific name (or YOLO class for non-plant).
     func cachedNarrative(forKey key: String) -> GemmaNarrative?
 
