@@ -14,6 +14,7 @@ final class AppContainer {
     let tensorFactory: any TensorFactoryProtocol
     let detection: any ObjectDetectionServiceProtocol
     let plantClassifier: any PlantClassificationServiceProtocol
+    let visionPlantGate: any VisionPlantGateServiceProtocol
     let speechInput: any SpeechInputServiceProtocol
     let whisper: any WhisperTranscriberServiceProtocol
     let gemini: any GeminiServiceProtocol
@@ -43,6 +44,7 @@ final class AppContainer {
         tensorFactory: any TensorFactoryProtocol,
         detection: any ObjectDetectionServiceProtocol,
         plantClassifier: any PlantClassificationServiceProtocol,
+        visionPlantGate: any VisionPlantGateServiceProtocol,
         speechInput: any SpeechInputServiceProtocol,
         whisper: any WhisperTranscriberServiceProtocol,
         gemini: any GeminiServiceProtocol,
@@ -57,6 +59,7 @@ final class AppContainer {
         self.tensorFactory = tensorFactory
         self.detection = detection
         self.plantClassifier = plantClassifier
+        self.visionPlantGate = visionPlantGate
         self.speechInput = speechInput
         self.whisper = whisper
         self.gemini = gemini
@@ -81,6 +84,7 @@ final class AppContainer {
         let camera = CameraService()
         let detection = GeneralObjectDetectionService(tensorFactory: tensorFactory, modelLoader: modelLoader)
         let plantClassifier = PlantClassificationService(tensorFactory: tensorFactory, modelLoader: modelLoader)
+        let visionPlantGate = VisionPlantGateService()
         let speechInput = SpeechInputService()
         let whisper = WhisperTranscriberService(modelLoader: modelLoader)
         let packStore = PackStore()
@@ -94,6 +98,7 @@ final class AppContainer {
             tensorFactory: tensorFactory,
             detection: detection,
             plantClassifier: plantClassifier,
+            visionPlantGate: visionPlantGate,
             speechInput: speechInput,
             whisper: whisper,
             gemini: gemini,
@@ -115,6 +120,7 @@ final class AppContainer {
         let camera = StubCameraService()
         let detection = StubObjectDetectionService()
         let plantClassifier = StubPlantClassificationService()
+        let visionPlantGate = StubVisionPlantGateService()
         let speechInput = StubSpeechInputService()
         let whisper = StubWhisperTranscriberService()
         let packStore = PackStore()
@@ -127,6 +133,7 @@ final class AppContainer {
             tensorFactory: tensorFactory,
             detection: detection,
             plantClassifier: plantClassifier,
+            visionPlantGate: visionPlantGate,
             speechInput: speechInput,
             whisper: whisper,
             gemini: gemini,

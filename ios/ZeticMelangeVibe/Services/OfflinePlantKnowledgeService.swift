@@ -22,12 +22,8 @@ final class OfflinePlantKnowledgeService: @unchecked Sendable {
     /// Resolves a `DetectionState` for one detection. `scientificName` is `nil`
     /// for non-plant detections (which short-circuit to the static template).
     func resolve(yoloClass: String, scientificName: String?) async -> DetectionState {
-        // Non-plant short-circuit.
-        if !ModelConfig.YOLO.plantClassAllowlist.contains(yoloClass) {
-            return .notFood(yoloClass: yoloClass)
-        }
         guard let scientificName, !scientificName.isEmpty else {
-            return .blank
+            return .notFood(yoloClass: yoloClass)
         }
         await refreshCacheIfNeeded()
         let entry = cacheLock.withLock { $0.indexed[scientificName.lowercased()] }

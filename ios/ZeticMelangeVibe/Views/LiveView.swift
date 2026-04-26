@@ -13,9 +13,11 @@ struct LiveView: View {
     @State private var frameSize: CGSize = .zero
     @State private var presentedDetection: TrackedDetection? = nil
     @State private var presentedState: DetectionState = .blank
+    @State private var presentedFrame: CameraFrame? = nil
     @State private var showHUD: Bool = false
     @State private var streamTask: Task<Void, Never>? = nil
     @State private var worker: InferenceWorker? = nil
+    @State private var lastFrame: CameraFrame? = nil
 
     @Namespace private var bloom
 
@@ -56,6 +58,7 @@ struct LiveView: View {
                 DetailSheet(
                     detection: det,
                     state: presentedState,
+                    frame: presentedFrame,
                     namespace: bloom,
                     onDismiss: dismissDetail
                 )
@@ -97,6 +100,7 @@ struct LiveView: View {
         withAnimation(UIConfig.Bloom.openCurve) {
             presentedDetection = det
             presentedState = state
+            presentedFrame = lastFrame
         }
     }
 
@@ -104,6 +108,7 @@ struct LiveView: View {
         withAnimation(UIConfig.Bloom.closeCurve) {
             presentedDetection = nil
             presentedState = .blank
+            presentedFrame = nil
         }
         container.camera.resume()
     }
@@ -111,8 +116,6 @@ struct LiveView: View {
     private func startCameraAndInference() async {
         let worker = InferenceWorker(
             detection: container.detection,
-            plant: container.plantClassifier,
-            knowledge: container.plantKnowledge,
             tracker: BoxTracker(),
             telemetry: container.telemetry
         )
@@ -124,6 +127,7 @@ struct LiveView: View {
         streamTask = Task { @MainActor [worker] in
             for await frame in container.camera.frames {
                 if Task.isCancelled { return }
+                self.lastFrame = frame
                 guard let outcome = await worker.process(frame: frame) else { continue }
                 self.detections = outcome.detections
                 self.states = outcome.states

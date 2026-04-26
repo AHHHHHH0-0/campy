@@ -20,6 +20,7 @@ enum UIStrings {
     // Detail sheet
     static let notInLocalDatabase = "not in local database"
     static let dismissHint = "tap anywhere to dismiss"
+    static let plantUnsureRetry = "Not sure this is a plant. Try tapping again with a closer view."
 
     // Error / quota strings
     static let quotaReply = "Model limit reached"

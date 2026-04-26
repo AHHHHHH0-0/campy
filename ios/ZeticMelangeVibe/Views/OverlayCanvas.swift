@@ -2,8 +2,8 @@ import AVFoundation
 import SwiftUI
 
 /// Draws one bounding box per tracked detection over the live camera preview.
-/// Box color is the deterministic verdict color (red / green / neutral / sage),
-/// suppressed for `.blank`. The box itself is the tap target.
+/// Box color is driven by `DetectionState`, with neutral gray for live YOLO-only
+/// detections. The box itself is the tap target.
 struct OverlayCanvas: View {
     let detections: [TrackedDetection]
     let states: [UUID: DetectionState]
@@ -62,7 +62,8 @@ struct OverlayCanvas: View {
         switch state {
         case .edible: return UIConfig.leafGreen
         case .poisonous: return UIConfig.alertRed
-        case .inedible, .notFood, .notFound: return UIConfig.sage
+        case .notFood: return UIConfig.neutralGray
+        case .inedible, .notFound: return UIConfig.sage
         case .blank: return .clear
         }
     }

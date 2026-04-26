@@ -9,7 +9,10 @@ enum UIConfig {
     static let inkGreen = Color(red: 0x1F / 255.0, green: 0x3D / 255.0, blue: 0x2B / 255.0)
     static let leafGreen = Color(red: 0x4F / 255.0, green: 0x7C / 255.0, blue: 0x45 / 255.0)
     static let sage = Color(red: 0xA8 / 255.0, green: 0xBF / 255.0, blue: 0xA3 / 255.0)
+    static let neutralGray = Color(red: 0xB8 / 255.0, green: 0xBC / 255.0, blue: 0xC2 / 255.0)
     static let paper = Color(red: 0xF6 / 255.0, green: 0xF1 / 255.0, blue: 0xE7 / 255.0)
+    static let lightVerdictGreen = Color(red: 0xE8 / 255.0, green: 0xF4 / 255.0, blue: 0xE6 / 255.0)
+    static let lightVerdictRed = Color(red: 0xF7 / 255.0, green: 0xE7 / 255.0, blue: 0xE5 / 255.0)
 
     /// Dedicated semantic safety token, deliberately outside the brand palette.
     static let alertRed = Color(red: 0xC0 / 255.0, green: 0x39 / 255.0, blue: 0x2B / 255.0)

@@ -18,7 +18,7 @@ enum DetectionState: Equatable, Sendable {
         case .inedible(let e): return "inedible: \(e.commonName)"
         case .poisonous(let e): return "poisonous: \(e.commonName)"
         case .notFound(let name): return "\(name) — not in local database"
-        case .notFood(let cls): return "this is a \(cls), not food"
+        case .notFood(let cls): return cls
         }
     }
 }

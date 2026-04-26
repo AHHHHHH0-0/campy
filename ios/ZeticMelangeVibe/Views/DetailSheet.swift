@@ -7,16 +7,33 @@ import SwiftUI
 struct DetailSheet: View {
     let detection: TrackedDetection
     let state: DetectionState
+    let frame: CameraFrame?
     let namespace: Namespace.ID
     let onDismiss: () -> Void
 
     @Environment(\.appContainer) private var container
     @State private var paragraph: String = ""
     @State private var streamTask: Task<Void, Never>? = nil
+    @State private var resolvedState: DetectionState
+
+    init(
+        detection: TrackedDetection,
+        state: DetectionState,
+        frame: CameraFrame?,
+        namespace: Namespace.ID,
+        onDismiss: @escaping () -> Void
+    ) {
+        self.detection = detection
+        self.state = state
+        self.frame = frame
+        self.namespace = namespace
+        self.onDismiss = onDismiss
+        _resolvedState = State(initialValue: state)
+    }
 
     var body: some View {
         ZStack {
-            UIConfig.paper
+            detailBackgroundColor
                 .ignoresSafeArea()
                 .matchedGeometryEffect(id: detection.id, in: namespace, isSource: false)
 
@@ -86,7 +103,7 @@ struct DetailSheet: View {
     }
 
     private var titleLine: String {
-        switch state {
+        switch resolvedState {
         case .edible(let e), .inedible(let e), .poisonous(let e):
             return e.commonName
         case .notFound(let name):
@@ -99,7 +116,7 @@ struct DetailSheet: View {
     }
 
     private var subtitleLine: String? {
-        switch state {
+        switch resolvedState {
         case .edible(let e), .inedible(let e), .poisonous(let e):
             return e.scientificName
         case .notFound:
@@ -110,7 +127,7 @@ struct DetailSheet: View {
     }
 
     private var rationale: String? {
-        switch state {
+        switch resolvedState {
         case .edible(let e), .inedible(let e), .poisonous(let e):
             return e.rationale
         case .notFood, .notFound, .blank:
@@ -119,15 +136,56 @@ struct DetailSheet: View {
     }
 
     private var rationaleColor: Color {
-        switch state {
+        switch resolvedState {
         case .poisonous: return UIConfig.alertRed
         default: return UIConfig.inkGreen.opacity(0.75)
         }
     }
 
+    private var detailBackgroundColor: Color {
+        switch resolvedState {
+        case .edible:
+            return UIConfig.lightVerdictGreen
+        case .inedible, .poisonous, .notFood:
+            return UIConfig.lightVerdictRed
+        case .notFound, .blank:
+            return UIConfig.paper
+        }
+    }
+
     private func startStreaming() async {
+        resolvedState = state
+        if let frame {
+            if let outcome = await container.visionPlantGate.evaluateTap(detection: detection, frame: frame) {
+                switch outcome.decision {
+                case .plantLike:
+                    if let prediction = await container.plantClassifier.classify(crop: detection.bbox, in: frame) {
+                        resolvedState = await container.plantKnowledge.resolve(
+                            yoloClass: detection.yoloClass,
+                            scientificName: prediction.scientificName
+                        )
+                    } else {
+                        paragraph = UIStrings.plantUnsureRetry
+                        return
+                    }
+                case .unsure:
+                    paragraph = UIStrings.plantUnsureRetry
+                    return
+                case .nonPlant:
+                    resolvedState = .notFood(yoloClass: detection.yoloClass)
+                }
+            } else {
+                paragraph = UIStrings.plantUnsureRetry
+                return
+            }
+        } else {
+            print("[VisionPlantGate] no_frame_for_tap yolo_class=\(detection.yoloClass)")
+            paragraph = UIStrings.plantUnsureRetry
+            return
+        }
+
         // Non-plant detections short-circuit to a static template — no Gemma.
-        switch state {
+        switch resolvedState {
         case .notFood(let cls):
             paragraph = staticNotFoodLine(for: cls)
             return
@@ -146,7 +204,7 @@ struct DetailSheet: View {
         paragraph = ""
         streamTask?.cancel()
         let stream: AsyncStream<String>
-        switch state {
+        switch resolvedState {
         case .edible(let e), .inedible(let e), .poisonous(let e):
             let blurb = await container.plantKnowledge.currentPrepBlurb()
             stream = container.gemma.narrate(plant: e, prepBlurb: blurb)
@@ -169,7 +227,7 @@ struct DetailSheet: View {
     }
 
     private var cacheKey: String {
-        switch state {
+        switch resolvedState {
         case .edible(let e), .inedible(let e), .poisonous(let e):
             return e.scientificName.lowercased()
         case .notFound(let name):
