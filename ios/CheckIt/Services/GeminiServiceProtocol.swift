@@ -11,7 +11,7 @@ struct GeminiTurnResult: Equatable, Sendable {
 }
 
 protocol GeminiServiceProtocol: AnyObject, Sendable {
-    /// Fires the parallel chat + pack-update calls against `gemini-2.5-pro`.
+    /// Fires the parallel chat + pack-update calls against `gemini-2.5-flash`.
     /// `transcript` is the post-Whisper, post-denylist user turn. The full
     /// conversation history is sourced internally from `TranscriptStore`.
     func dispatch(transcript: String) async -> GeminiTurnResult

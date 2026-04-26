@@ -1,6 +1,6 @@
 import Foundation
 
-/// Two parallel `gemini-2.5-pro` calls per user turn:
+/// Two parallel `gemini-2.5-flash` calls per user turn:
 /// - Chat call: free-text reply governed by `geminiChatSystemPrompt`.
 /// - Pack-update call: `responseSchema` JSON returning a fresh `RegionPack`.
 ///
@@ -84,7 +84,7 @@ final class GeminiPackService: GeminiServiceProtocol, @unchecked Sendable {
         do {
             let body = chatRequestBody(userTurn: userTurn, history: history)
             let response: GeminiChatResponse = try await postJSON(
-                model: "gemini-2.5-pro",
+                model: "gemini-2.5-flash",
                 body: body,
                 expecting: GeminiChatResponse.self
             )
@@ -112,7 +112,7 @@ final class GeminiPackService: GeminiServiceProtocol, @unchecked Sendable {
             do {
                 let body = packRequestBody(userTurn: userTurn, history: history, retryHint: lastError?.localizedDescription)
                 let response: GeminiChatResponse = try await postJSON(
-                    model: "gemini-2.5-pro",
+                    model: "gemini-2.5-flash",
                     body: body,
                     expecting: GeminiChatResponse.self
                 )
