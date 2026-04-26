@@ -62,10 +62,10 @@ fastlane/screenshots/**/*.png
 fastlane/test_output
 
 # Secrets
-ios/ZeticMelangeVibe/Config/Secrets.xcconfig
+ios/CheckIt/Config/Secrets.xcconfig
 
 # Generated Xcode project (built by `xcodegen generate`)
-ZeticMelangeVibe.xcodeproj/
+CheckIt.xcodeproj/
 
 # Derived data
 DerivedData/

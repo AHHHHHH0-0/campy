@@ -95,13 +95,14 @@ final class SpeechInputService: SpeechInputServiceProtocol, @unchecked Sendable 
         guard frameCount > 0 else { return }
 
         // Mix down to mono and append.
-        var mono = [Float](repeating: 0, count: frameCount)
+        var monoMutable = [Float](repeating: 0, count: frameCount)
         for ch in 0..<channelCount {
             let ptr = channels[ch]
             for i in 0..<frameCount {
-                mono[i] += ptr[i] / Float(channelCount)
+                monoMutable[i] += ptr[i] / Float(channelCount)
             }
         }
+        let mono = monoMutable
         bufferLock.withLock { $0.append(contentsOf: mono) }
 
         // Smoothed RMS for visualizer.

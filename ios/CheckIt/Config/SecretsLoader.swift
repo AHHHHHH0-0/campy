@@ -9,7 +9,7 @@ enum SecretsLoader {
 
     private static func value(forKey key: String) -> String {
         guard let raw = Bundle.main.object(forInfoDictionaryKey: key) as? String else {
-            fatalError("Missing Info.plist key '\(key)'. Configure ios/ZeticMelangeVibe/Config/Secrets.xcconfig.")
+            fatalError("Missing Info.plist key '\(key)'. Configure ios/CheckIt/Config/Secrets.xcconfig.")
         }
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty,

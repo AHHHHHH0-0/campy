@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct ZeticMelangeVibeApp: App {
+struct CheckItApp: App {
     @State private var container: AppContainer = AppContainer.makeProduction()
 
     var body: some Scene {

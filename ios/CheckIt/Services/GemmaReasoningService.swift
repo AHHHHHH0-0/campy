@@ -2,7 +2,7 @@ import Foundation
 import os
 
 #if canImport(ZeticMLange)
-import ZeticMLange
+@preconcurrency import ZeticMLange
 #endif
 
 /// Wraps the Zetic-hosted Gemma LLM (`changgeun/gemma-4-E2B-it`).
@@ -12,7 +12,7 @@ final class GemmaReasoningService: GemmaReasoningServiceProtocol, @unchecked Sen
 
     private let modelLoader: ModelLoader
     private let cacheLock = OSAllocatedUnfairLock<[String: GemmaNarrative]>(initialState: [:])
-    private let inferenceQueue = DispatchQueue(label: "ai.campy.gemma.inference", qos: .userInitiated)
+    private let inferenceQueue = DispatchQueue(label: "ai.checkit.gemma.inference", qos: .userInitiated)
 
     init(modelLoader: ModelLoader) {
         self.modelLoader = modelLoader

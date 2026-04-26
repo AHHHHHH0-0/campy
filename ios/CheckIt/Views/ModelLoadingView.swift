@@ -1,44 +1,45 @@
 import SwiftUI
 
 /// Splash held until `AppContainer.modelLoadProgress` hits 1.0. Layout:
-/// title centered upper third, 266 x 6 pt progress bar centered middle,
-/// "Powered by " + `PoweredByZetic` image asset just below, beta-disclaimer
-/// fine-print line at the bottom safe-area edge.
+/// logo + progress bar + "Powered by Zetic" grouped at vertical center with
+/// equal spacing between each element; beta-disclaimer fine-print at the
+/// bottom safe-area edge.
 struct ModelLoadingView: View {
     @Environment(\.appContainer) private var container
 
+    private let itemSpacing: CGFloat = 16
+
     var body: some View {
-        GeometryReader { geo in
-            ZStack {
-                UIConfig.paper.ignoresSafeArea()
+        ZStack {
+            UIConfig.paper.ignoresSafeArea()
 
-                VStack(spacing: 0) {
-                    Spacer().frame(height: geo.size.height * 0.18)
+            VStack(spacing: 0) {
+                Spacer()
 
-                    Text(UIStrings.appTitle)
-                        .font(.system(size: 44, weight: .semibold, design: .rounded))
-                        .foregroundStyle(UIConfig.inkGreen)
+                Image(UIStrings.checkitLogoAsset)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 200)
 
-                    Spacer()
+                Spacer().frame(height: itemSpacing)
 
-                    progressBar
-                        .frame(width: 266, height: 6)
-                        .padding(.bottom, UIConfig.Spacing.md)
+                progressBar
+                    .frame(width: 266, height: 6)
 
-                    poweredBy
-                        .padding(.bottom, UIConfig.Spacing.lg)
+                Spacer().frame(height: itemSpacing)
 
-                    Spacer()
+                poweredBy
 
-                    Text(UIStrings.betaDisclaimer)
-                        .font(.system(size: 11, weight: .regular))
-                        .foregroundStyle(UIConfig.inkGreen.opacity(0.55))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, UIConfig.Spacing.lg)
-                        .padding(.bottom, UIConfig.Spacing.md)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                Spacer()
+
+                Text(UIStrings.betaDisclaimer)
+                    .font(.system(size: 11, weight: .regular))
+                    .foregroundStyle(UIConfig.inkGreen.opacity(0.55))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, UIConfig.Spacing.lg)
+                    .padding(.bottom, UIConfig.Spacing.md)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 

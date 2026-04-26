@@ -31,7 +31,7 @@ actor VisionPlantGateService: VisionPlantGateServiceProtocol {
             let handler = VNImageRequestHandler(cgImage: crop, options: [:])
             try handler.perform([request])
 
-            let observations = (request.results as? [VNClassificationObservation]) ?? []
+            let observations: [VNClassificationObservation] = request.results ?? []
             let top = observations.prefix(8).map {
                 VisionPlantCandidate(identifier: $0.identifier.lowercased(), confidence: $0.confidence)
             }

@@ -2,7 +2,7 @@ import Foundation
 import Observation
 
 /// Single composition root. Owns and wires every service.
-/// Built once at app start in `ZeticMelangeVibeApp`, propagated via
+/// Built once at app start in `CheckItApp`, propagated via
 /// `@Environment(\.appContainer)`. Exposes protocols, not concrete types.
 @MainActor
 @Observable
@@ -80,7 +80,7 @@ final class AppContainer {
         let telemetry = InferenceTelemetry()
         let modelLoader = ModelLoader()
 
-        let tensorFactory = ZeticTensorFactory()
+        let tensorFactory = CheckItTensorFactory()
         let camera = CameraService()
         let detection = GeneralObjectDetectionService(tensorFactory: tensorFactory, modelLoader: modelLoader)
         let plantClassifier = PlantClassificationService(tensorFactory: tensorFactory, modelLoader: modelLoader)
@@ -116,7 +116,7 @@ final class AppContainer {
     static var preview: AppContainer {
         let telemetry = InferenceTelemetry()
         let modelLoader = ModelLoader.preview
-        let tensorFactory = ZeticTensorFactory()
+        let tensorFactory = CheckItTensorFactory()
         let camera = StubCameraService()
         let detection = StubObjectDetectionService()
         let plantClassifier = StubPlantClassificationService()

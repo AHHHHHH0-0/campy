@@ -23,8 +23,8 @@ final class CameraService: NSObject, CameraServiceProtocol, @unchecked Sendable 
 
     private let session: AVCaptureSession
     private let videoOutput: AVCaptureVideoDataOutput
-    private let sessionQueue = DispatchQueue(label: "ai.campy.camera.session", qos: .userInitiated)
-    private let captureQueue = DispatchQueue(label: "ai.campy.camera.capture", qos: .userInitiated)
+    private let sessionQueue = DispatchQueue(label: "ai.checkit.camera.session", qos: .userInitiated)
+    private let captureQueue = DispatchQueue(label: "ai.checkit.camera.capture", qos: .userInitiated)
     private let frameContinuation: AsyncStream<CameraFrame>.Continuation
     private let pausedLock = OSAllocatedUnfairLock<Bool>(initialState: false)
     private let frameIndexLock = OSAllocatedUnfairLock<Int>(initialState: 0)
@@ -124,9 +124,8 @@ final class CameraService: NSObject, CameraServiceProtocol, @unchecked Sendable 
             session.addOutput(videoOutput)
         }
 
-        if let connection = videoOutput.connection(with: .video),
-           connection.isVideoOrientationSupported {
-            connection.videoOrientation = .portrait
+        if let connection = videoOutput.connection(with: .video) {
+            connection.videoRotationAngle = 90
         }
         session.commitConfiguration()
     }

@@ -34,4 +34,5 @@ enum UIStrings {
     // Asset names
     static let transcriptDividerAsset = "TranscriptDivider"
     static let poweredByZeticAsset = "PoweredByZetic"
+    static let checkitLogoAsset = "CheckitLogo"
 }

@@ -9,7 +9,7 @@ import Foundation
 /// We use `CIImage` + `CIContext.render(...)` for the resize because it gives us
 /// hardware-accelerated scaling without a Metal device dance, and the resulting
 /// pixel data lives in a plain `CVPixelBuffer` we can read back as bytes.
-final class ZeticTensorFactory: TensorFactoryProtocol, @unchecked Sendable {
+final class CheckItTensorFactory: TensorFactoryProtocol, @unchecked Sendable {
 
     private let ciContext: CIContext
 

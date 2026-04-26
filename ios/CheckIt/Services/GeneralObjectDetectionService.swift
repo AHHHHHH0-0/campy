@@ -90,7 +90,7 @@ actor GeneralObjectDetectionService: ObjectDetectionServiceProtocol {
             floats[attr * anchorCount + anchor]
         }
 
-        // Letterbox parameters used in `ZeticTensorFactory.makeNormalizedNCHWBytes`.
+        // Letterbox parameters used in `CheckItTensorFactory.makeNormalizedNCHWBytes`.
         let scale = min(modelInputSize.width / frameSize.width, modelInputSize.height / frameSize.height)
         let scaledW = frameSize.width * scale
         let scaledH = frameSize.height * scale
@@ -139,7 +139,7 @@ actor GeneralObjectDetectionService: ObjectDetectionServiceProtocol {
             ))
         }
 
-        return Self.applyNMS(detections, iouThreshold: 0.45)
+        return Self.applyNMS(detections, iouThreshold: AppConfig.boxIoUMatchThreshold)
     }
 
     private static func applyNMS(_ dets: [RawDetection], iouThreshold: Float) -> [RawDetection] {
