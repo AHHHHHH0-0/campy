@@ -156,7 +156,7 @@ final class ModelLoader {
                 personalKey: personalKey,
                 name: ModelConfig.WhisperEncoder.name,
                 version: ModelConfig.WhisperEncoder.version,
-                modelMode: .RUN_SPEED,
+                modelMode: .RUN_AUTO,
                 onDownload: { [weak self] progress in
                     Task { @MainActor in self?.whisperEncoderProgress = Double(progress) }
                 }
@@ -176,7 +176,7 @@ final class ModelLoader {
                 personalKey: personalKey,
                 name: ModelConfig.WhisperDecoder.name,
                 version: ModelConfig.WhisperDecoder.version,
-                modelMode: .RUN_SPEED,
+                modelMode: .RUN_AUTO,
                 onDownload: { [weak self] progress in
                     Task { @MainActor in self?.whisperDecoderProgress = Double(progress) }
                 }

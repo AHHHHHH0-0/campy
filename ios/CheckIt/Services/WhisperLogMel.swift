@@ -31,6 +31,11 @@ enum WhisperLogMel {
             padded = Array(padded.prefix(totalSamples))
         }
 
+        if let peak = padded.map({ abs($0) }).max(), peak > 1e-6 {
+            let gain = Float(0.9) / peak
+            vDSP_vsmul(padded, 1, [gain], &padded, 1, vDSP_Length(padded.count))
+        }
+
         let frameCount = melFrameCount
         let log2Size = vDSP_Length(log2(Double(nFFT)))
         guard let fft = vDSP_create_fftsetup(log2Size, FFTRadix(kFFTRadix2)) else {

@@ -4,7 +4,7 @@ import Foundation
 /// Edit values here — never inline magic numbers in services or views.
 enum AppConfig {
     // Detection / classification
-    static let detectionConfidenceThreshold: Float = 0.85
+    static let detectionConfidenceThreshold: Float = 0.4
     static let plantClassificationAcceptanceThreshold: Float = 0.30
     /// Hard cap on the number of boxes shown per frame (highest-confidence kept).
     static let maxDetectionsPerFrame: Int = 3

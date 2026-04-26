@@ -23,13 +23,19 @@ final class OfflinePlantKnowledgeService: @unchecked Sendable {
     /// for non-plant detections (which short-circuit to the static template).
     func resolve(yoloClass: String, scientificName: String?) async -> DetectionState {
         guard let scientificName, !scientificName.isEmpty else {
+            print("[KnowledgeService] no scientific name — routing yolo_class=\(yoloClass) as notFood")
             return .notFood(yoloClass: yoloClass)
         }
         await refreshCacheIfNeeded()
-        let entry = cacheLock.withLock { $0.indexed[scientificName.lowercased()] }
+        let (entry, packSize) = cacheLock.withLock { state in
+            (state.indexed[scientificName.lowercased()], state.indexed.count)
+        }
+        print("[KnowledgeService] lookup key=\(scientificName.lowercased()) pack_size=\(packSize)")
         guard let entry else {
+            print("[KnowledgeService] miss — \(scientificName) not in pack")
             return .notFound(scientificName: scientificName)
         }
+        print("[KnowledgeService] hit common_name=\(entry.commonName) category=\(entry.category.rawValue)")
         switch entry.category {
         case .edible: return .edible(entry)
         case .inedible: return .inedible(entry)

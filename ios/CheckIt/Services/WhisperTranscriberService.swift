@@ -44,6 +44,15 @@ actor WhisperTranscriberService: WhisperTranscriberServiceProtocol {
             #endif
             return ""
         }
+
+        let rms = sqrt(resampled.map { $0 * $0 }.reduce(0, +) / Float(resampled.count))
+        guard rms > 0.0 else {
+            #if DEBUG
+            logger.debug("transcribe skipped: audio too quiet rms=\(rms, privacy: .public)")
+            #endif
+            return ""
+        }
+
         #if DEBUG
         logger.debug(
             "transcribe start inputPcmCount=\(audio.pcm.count, privacy: .public) inputSampleRate=\(audio.sampleRate, privacy: .public) resampledCount=\(resampled.count, privacy: .public)"

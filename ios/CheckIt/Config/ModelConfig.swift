@@ -26,7 +26,6 @@ enum ModelConfig {
     }
 
     // Whisper encoder — must match the decoder variant (both tiny: d_model=384).
-    // whisper-base-encoder outputs d_model=512 which is incompatible with whisper-tiny-decoder.
     enum WhisperEncoder {
         static let name = "OpenAI/whisper-tiny-encoder"
         static let version = 1

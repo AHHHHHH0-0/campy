@@ -161,27 +161,45 @@ struct DetailSheet: View {
             if let outcome = await container.visionPlantGate.evaluateTap(detection: detection, frame: frame) {
                 switch outcome.decision {
                 case .plantLike:
+                    print("[Pipeline] VisionPlantGate decision=plantLike yolo_class=\(detection.yoloClass)")
                     if let prediction = await container.plantClassifier.classify(crop: detection.bbox, in: frame) {
+                        print("[Pipeline] PlantClassifier scientific_name=\(prediction.scientificName) confidence=\(String(format: "%.3f", prediction.confidence))")
                         resolvedState = await container.plantKnowledge.resolve(
                             yoloClass: detection.yoloClass,
                             scientificName: prediction.scientificName
                         )
+                        switch resolvedState {
+                        case .edible(let e):
+                            print("[Pipeline] KnowledgeService resolved=edible common_name=\(e.commonName) scientific_name=\(e.scientificName)")
+                        case .inedible(let e):
+                            print("[Pipeline] KnowledgeService resolved=inedible common_name=\(e.commonName) scientific_name=\(e.scientificName)")
+                        case .poisonous(let e):
+                            print("[Pipeline] KnowledgeService resolved=poisonous common_name=\(e.commonName) scientific_name=\(e.scientificName)")
+                        case .notFound(let name):
+                            print("[Pipeline] KnowledgeService resolved=notFound scientific_name=\(name)")
+                        default:
+                            break
+                        }
                     } else {
+                        print("[Pipeline] PlantClassifier returned nil (below threshold or model not ready)")
                         paragraph = UIStrings.plantUnsureRetry
                         return
                     }
                 case .unsure:
+                    print("[Pipeline] VisionPlantGate decision=unsure yolo_class=\(detection.yoloClass)")
                     paragraph = UIStrings.plantUnsureRetry
                     return
                 case .nonPlant:
+                    print("[Pipeline] VisionPlantGate decision=nonPlant yolo_class=\(detection.yoloClass)")
                     resolvedState = .notFood(yoloClass: detection.yoloClass)
                 }
             } else {
+                print("[Pipeline] VisionPlantGate returned nil (crop failed) yolo_class=\(detection.yoloClass)")
                 paragraph = UIStrings.plantUnsureRetry
                 return
             }
         } else {
-            print("[Gemma] no_frame_for_tap yolo_class=\(detection.yoloClass)")
+            print("[Pipeline] no frame available for tap yolo_class=\(detection.yoloClass)")
             paragraph = UIStrings.plantUnsureRetry
             return
         }

@@ -23,6 +23,7 @@ struct OverlayCanvas: View {
                         label: state.label
                     )
                     .frame(width: rect.width, height: rect.height)
+                    .contentShape(Rectangle())
                     .position(x: rect.midX, y: rect.midY)
                     .matchedGeometryEffect(id: det.id, in: namespace, isSource: true)
                     .onTapGesture {
